@@ -65,28 +65,27 @@ function schemaWithFormats (schema: JSONSchema7, formats: { [k: string]: string 
 }
 
 // perform a mutation operation with given `mutation` and `values`
-export function saveData (
+export async function saveData (
   props: FrontierDataGraphQLProps,
   values: object
 ): Promise<undefined | object> {
   if (!props.client && props.mutation) {
     // tslint:disable-next-line no-console
-    console.error('Trying to save data with a mutation without providing an ApolloClient!');
+    console.log('Trying to save data with a mutation without providing an ApolloClient!');
     return Promise.reject({});
   } else if (!props.mutation && props.save) {
     return props.save(values);
   } else {
-    return props.client!.mutate({
+    const result = await props.client!.mutate({
       mutation: props.mutation,
       variables: values
-    }).then(result => {
-      if (result.errors) {
-        // FIXME: find a way to handle GQL errors on mutation arguments
-        return {};
-      } else {
-        return undefined; // submit succeed
-      }
-    });
+    })
+    if (result.errors) {
+      // FIXME: find a way to handle GQL errors on mutation arguments
+      throw result.errors;
+    } else {
+      return result.data; // submit succeed
+    }
   }
 }
 

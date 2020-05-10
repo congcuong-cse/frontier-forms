@@ -37,7 +37,9 @@ export interface FrontierRenderProps {
 export interface FrontierProps extends FrontierDataProps {
   uiKit?: UIKitAPI;
   initialValues?: {};
+  fieldProps?: {[path: string]: any}
   onSave?: (values: object) => void;
+  onSaveError?: (error: any) => void;
   resetOnSave?: boolean;
   order?: string[];
 
@@ -138,9 +140,18 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
 
   onSubmit = (formValues: object) => {
     const save = saveData(this.props, formValues);
-    save.then(() => {
+    save.then((data) => {
+      if (this.props.onSave) {
+        this.props.onSave(data || {})
+      }
       if (this.props.resetOnSave === true) {
         this.form!.reset();
+      }
+    }).catch((error) => {
+      if (this.props.onSaveError) {
+        this.props.onSaveError(error)
+      } else {
+        console.log(`Submit error: ${JSON.stringify(error, null, 2)}`)
       }
     });
     return save;
@@ -186,8 +197,9 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
             kit,
             path, props => {
               const state = this.form!.getFieldState(path);
+              const fieldProps = this.getFieldProps(path);
               const FieldComponent = this.uiKitComponentFor(path, definition, required);
-              return <FieldComponent {...state!} {...props} />;
+              return <FieldComponent {...state!} {...fieldProps} {...props} />;
             });
         },
         this.schema!.required || []
@@ -216,8 +228,9 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
       this.schema!,
       (path, definition, required) => {
         const state = this.form!.getFieldState(path);
+        const fieldProps = this.getFieldProps(path);
         const FieldComponent = this.uiKitComponentFor(path, definition, required);
-        fields[path] = <FieldComponent {...state!} key={path} />;
+        fields[path] = <FieldComponent {...state!} {...fieldProps} key={path} />;
       },
       this.schema!.required || []
     );
@@ -239,6 +252,13 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
     return this.props.uiKit!.__wrapWithForm(this.form!, values(fields));
   }
 
+  getFieldProps(path: string) {
+    if (!this.props.fieldProps) {
+      return {}
+    }
+    return this.props.fieldProps[path] || {}
+  }
+
   render () {
     if (!this.state.formState) {
       return null; // TODO: do render with renderprops and pass a `loading` flag
@@ -248,7 +268,7 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
     if (child) {
       if (typeof child !== 'function') {
         // tslint:disable-next-line no-console
-        console.error(
+        console.log(
           `Warning: Must specify a render function as children, received "${typeof child}"`
         );
         return null;
@@ -259,7 +279,7 @@ export class Frontier extends Component<FrontierProps, FrontierState> {
       return this.renderWithKit();
     } else {
       // tslint:disable-next-line no-console
-      console.error(
+      console.log(
         `Warning: Must specify either a render function as children or give a \`uiKit=\` props`
       );
       return null;

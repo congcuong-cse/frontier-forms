@@ -19,6 +19,7 @@
     "ajv": "^6.10.0",
     "apollo-client": "^2.5.1",
     "final-form": "^4.12.0",
+    "final-form-set-field-data": "^1.0.2",
     "graphql-2-json-schema": "^0.1.1",
     "graphql-tag": "^2.10.1",
     "lodash": "^4.17.11",

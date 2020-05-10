@@ -3,6 +3,8 @@ import ajv = require('ajv');
 import { Config, createForm, FieldSubscription, fieldSubscriptionItems, FormApi } from 'final-form';
 import { JSONSchema7 } from 'json-schema';
 import { each, noop, set } from 'lodash';
+import setFieldData from 'final-form-set-field-data'
+
 
 export const allFieldSubscriptionItems: FieldSubscription = fieldSubscriptionItems.reduce((result, key) => {
   result[key] = true;
@@ -24,7 +26,8 @@ export function getFormFromSchema (
   const form = createForm({
     validate: validateWithSchema(schema),
     onSubmit,
-    initialValues
+    initialValues,
+    mutators: {setFieldData}
   });
 
   registerFields(form, schema);
@@ -107,7 +110,7 @@ function formatErrors (ajvErrors: Ajv.ErrorObject[]): object {
         [
           value.dataPath.substr(1, value.dataPath.length),
           (value.params as Ajv.RequiredParams).missingProperty
-        ].join('') :
+        ].join('.') :
         (value.params as Ajv.RequiredParams).missingProperty;
 
       set(

@@ -69,7 +69,7 @@ export const UIKit = (): UIKitAPI => {
     __wrapWithForm: (state, children) => {
       if (!handlers.form) {
         // tslint:disable-next-line no-console
-        console.error('Frontier: no `form` handler defined in UIKit!');
+        console.log('Frontier: no `form` handler defined in UIKit!');
         return null;
       } else {
         return handlers.form(state, children);
